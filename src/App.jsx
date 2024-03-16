@@ -23,22 +23,26 @@ async function hashPassword(password) {
 }
 
 const App = () => {
+  // State for login form
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+
+  // State for chat
   const [loggedIn, setLoggedIn] = useState(false);
   const [rooms, setRooms] = useState([]);
   const [roomId, setRoomId] = useState('');
+  const [selectedRoom, setSelectedRoom] = useState(null);
   const [messages, setMessages] = useState([]);
-  const [user, setUser] = useState({
-    username: 'funke.test',
-    password: 'hola',
-  });
+  const [messageInput, setMessageInput] = useState('');
 
-  const loginUser = async (username, password) => {
+  const loginUser = async (e) => {
+    e.preventDefault();
     await sdk.connection.connect();
     await sdk.account.loginWithPassword(username, await hashPassword(password));
     setLoggedIn(true);
 
-    const userDetails = sdk.account.user;
-    console.log(userDetails);
+    setUsername('');
+    setPassword('');
 
     fetchRooms();
   };
@@ -60,6 +64,7 @@ const App = () => {
 
   const fetchRoomData = async (rid) => {
     setRoomId(rid);
+    setSelectedRoom(rid);
     const channelMessages = await sdk.rest.get(
       '/v1/channels.history', { roomId: rid }
     );
@@ -72,36 +77,106 @@ const App = () => {
     setLoggedIn(false);
   };
 
-  return (
-    <div>
-      {loggedIn ? (
-        <button onClick={logoutUser}>Logout</button>
-      ) : (
-        <button
-          onClick={() => {
-            loginUser(user.username, user.password);
-          }}
-        >
-          Login
-        </button>
-      )}
+  // Format ISO date
+  const formatIsoDate = (isoDate) => {
+    const date = new Date(isoDate);
+    // format for chat time, remove seconds
+    return date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: 'numeric',
+    });
+  };
 
-      <div>
-        <h1>Rooms</h1>
-        <ul>
-          {rooms.map((room) => (
-            <li key={room.rid} onClick={() => fetchRoomData(room.rid)}>
-              {room.name}
-            </li>
-          ))}
-        </ul>
-        <h1>Messages</h1>
-        <ul>
-          {[...messages.values()].map((message) => (
-            <li key={message._id}>{message.msg}</li>
-          ))}
-        </ul>
+  const sendChatMessage = async (e) => {
+    e.preventDefault();
+    await sdk.rest.post('/v1/chat.sendMessage', {
+      message: {
+        rid: roomId,
+        msg: messageInput
+      }
+    });
+
+    setMessageInput('');
+  }
+
+  return (
+    <div className="container">
+      <div className="title-section">
+        <h1>React-RocketChat</h1>
+        <p>Rocket.Chat client using React and WebSockets</p>
       </div>
+      {!loggedIn ? (
+        <form onSubmit={loginUser} className="login-form">
+          <input
+            type="text"
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <button type="submit">Login</button>
+        </form>
+      ) : (
+        <div className="flex-chat-section">
+          <div className="rooms">
+            <h2>Rooms</h2>
+            <hr />
+            <ul>
+              {rooms.map((room) => (
+                <li
+                  key={room._id}
+                  onClick={() => fetchRoomData(room.rid)}
+                  className={selectedRoom === room.rid ? 'selected' : ''}
+                >
+                  {room.name}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="messages">
+            {selectedRoom ? (
+              <div className="messages-col">
+                <ul className="messages-container">
+                  {[...messages.values()].map((message) => (
+                    <li key={message._id} className="box">
+                      <div className="message">
+                        <p className="user">
+                          {message.u.name} - {formatIsoDate(message.ts)}
+                        </p>
+                        <p className="text">{message.msg}</p>
+                      </div>
+                    </li>
+                  ))}
+
+                </ul>
+                <div className="form">
+                  <textarea
+                    placeholder="Type your message here..."
+                    rows="2"
+                    value={messageInput}
+                    onChange={(e) => setMessageInput(e.target.value)}
+                  ></textarea>
+                  <button
+                    onClick={sendChatMessage}
+                    className="send-button"
+                  >
+                    Send
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className="load-message-alert">
+                Select a room to start chatting!
+              </p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
