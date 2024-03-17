@@ -69,7 +69,7 @@ li {
     margin-bottom: 20px;
     height: 5px;
     border-radius: 5px;
-    background-color: #F5455C;
+    background-color: #523cfd;
     width: 10%;
     border: none;
 }
@@ -89,14 +89,14 @@ li {
 
 .flex-chat-section .rooms ul li:hover {
     color: #f4f4f4;
-    background-color: #F5455C;
+    background-color: #523cfd;
     border-radius: 5px;
     padding: 10px;
 }
 
 .flex-chat-section .rooms ul li.selected {
     color: #f4f4f4;
-    background-color: #F5455C;
+    background-color: #523cfd;
     border-radius: 5px;
     padding: 10px;
 }
@@ -128,7 +128,7 @@ li {
     border-radius: 10px;
     padding: 5px;
     display: flex;
-    border: 2px solid #F5455C;
+    border: 2px solid #523cfd;
 }
 
 .flex-chat-section .messages-col .form textarea {
@@ -146,7 +146,7 @@ li {
     padding: 10px 20px;
     border: none;
     border-radius: 5px;
-    background-color: #F5455C;
+    background-color: #523cfd;
     color: #f4f4f4;
     cursor: pointer;
     margin-left: 10px;
@@ -175,7 +175,7 @@ li {
 .flex-chat-section .messages li .message .user {
     font-size: .9rem;
     font-weight: 300;
-    color: #F5455C;
+    color: #523cfd;
 }
 
 .flex-chat-section .messages li .message .text {
@@ -211,7 +211,7 @@ li {
     padding: 20px;
     border: none;
     border-radius: 5px;
-    background-color: #F5455C;
+    background-color: #523cfd;
     color: #f4f4f4;
     cursor: pointer;
 }

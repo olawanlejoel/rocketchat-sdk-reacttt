@@ -32,26 +32,8 @@ const App = () => {
   const [rooms, setRooms] = useState([]);
   const [roomId, setRoomId] = useState('');
   const [selectedRoom, setSelectedRoom] = useState(null);
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState(new Map());
   const [messageInput, setMessageInput] = useState('');
-
-  const loginUser = async (e) => {
-    e.preventDefault();
-    await sdk.connection.connect();
-    await sdk.account.loginWithPassword(username, await hashPassword(password));
-    setLoggedIn(true);
-
-    setUsername('');
-    setPassword('');
-
-    fetchRooms();
-  };
-
-  const fetchRooms = async () => {
-    const rooms = await sdk.rest.get('/v1/subscriptions.get');
-    console.log(rooms.update);
-    setRooms(rooms.update);
-  };
 
   useEffect(() => {
     return sdk.stream('room-messages', roomId, (args) => {
@@ -62,20 +44,37 @@ const App = () => {
     }).stop;
   }, [roomId]);
 
+  const loginUser = async (e) => {
+    e.preventDefault();
+    await sdk.connection.connect();
+    await sdk.account.loginWithPassword(username, await hashPassword(password));
+    setLoggedIn(true);
+    setUsername('');
+    setPassword('');
+    fetchRooms();
+  };
+
+  const fetchRooms = async () => {
+    const response = await sdk.rest.get('/v1/subscriptions.get');
+    if (response && response.update) { // Verify response structure
+      setRooms(response.update); // Ensure this matches the actual structure of the response
+    }
+  };
+
   const fetchRoomData = async (rid) => {
     setRoomId(rid);
     setSelectedRoom(rid);
-    const channelMessages = await sdk.rest.get(
-      '/v1/channels.history', { roomId: rid }
-    );
+    // const channelMessages = await sdk.rest.get(
+    //   '/v1/channels.history', { roomId: rid }
+    // );
 
-    setMessages(channelMessages.messages);
+    // setMessages(channelMessages.messages);
   };
 
-  const logoutUser = async () => {
-    await sdk.account.logout();
-    setLoggedIn(false);
-  };
+  // const logoutUser = async () => {
+  //   await sdk.account.logout();
+  //   setLoggedIn(false);
+  // };
 
   // Format ISO date
   const formatIsoDate = (isoDate) => {
@@ -87,23 +86,24 @@ const App = () => {
     });
   };
 
-  const sendChatMessage = async (e) => {
+  const sendChatMessage = async (e, msg) => {
     e.preventDefault();
     await sdk.rest.post('/v1/chat.sendMessage', {
       message: {
         rid: roomId,
-        msg: messageInput
-      }
+        msg,
+      },
     });
 
     setMessageInput('');
-  }
+
+  };
 
   return (
     <div className="container">
       <div className="title-section">
         <h1>React-RocketChat</h1>
-        <p>Rocket.Chat client using React and WebSockets</p>
+        <p>Rocket.Chat client using React and SDK</p>
       </div>
       {!loggedIn ? (
         <form onSubmit={loginUser} className="login-form">
@@ -161,12 +161,12 @@ const App = () => {
                     value={messageInput}
                     onChange={(e) => setMessageInput(e.target.value)}
                   ></textarea>
-                  <button
-                    onClick={sendChatMessage}
+                  <a
+                    onClick={(e) => sendChatMessage(e, messageInput)}
                     className="send-button"
                   >
                     Send
-                  </button>
+                  </a>
                 </div>
               </div>
             ) : (
